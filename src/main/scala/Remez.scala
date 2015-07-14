@@ -6,7 +6,7 @@ import scala.util.control.Breaks._
 
 /** An iterative algorithm to compute the least squares polynomial approximation to a function.
   *
-  *
+  * A basic test can be implemented as follows: new Remez(math.sin(_), math.cos(_), 0.0, math.pow(2,-10), 2); res0.coeffs
   */
 class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, order: Int, iter: Int=10, thresh: Double=math.pow(2,-30)) {
     /** Find the root of err between y1 and y2. */

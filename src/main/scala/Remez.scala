@@ -8,9 +8,9 @@ import scala.util.control.Breaks._
   *
   * A basic test can be implemented as follows: new Remez(math.sin(_), math.cos(_), 0.0, math.pow(2,-10), 2); res0.coeffs
   */
-class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, order: Int, iter: Int=10, thresh: Double=math.pow(2,-30)) {
+class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, order: Int, maxIter: Int=10, thresh: Double=math.pow(2,-30), findZeroMaxIter: Int=1000, findZeroThresh: Double = math.pow(2,-52)) {
     /** Find the root of err between y1 and y2. */
-    def findzero(err: Double => Double, y1: Double, y2: Double): Double = {
+    def findzero(err: Double => Double, y1: Double, y2: Double, maxIter: Int, thresh: Double): Double = {
         // Get the value of the function at each point.
         var x1 = y1
         var x2 = y2
@@ -25,7 +25,8 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         var x = x1 - fx1*((x2-x1)/(fx2-fx1))
         var fx = err(x)
 
-        while (math.abs(fx) > math.pow(2,-52)) {
+        var i = 0
+        while (math.abs(fx) > thresh && i < maxIter) {
             // Shift the interval.
             if (signum(fx) == signum(fx1)) { 
                 x1 = x
@@ -36,7 +37,9 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
             }
             x = x1 - fx1*((x2-x1)/(fx2-fx1))
             fx = err(x)
+            i += 1
         }
+        if (i == maxIter) println(f"Warning: FindZero did not converge after $i%d iterations.")
         x
     }
 
@@ -47,7 +50,7 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
     val t = DenseVector.range(1,order+1) // Array storing the powers of the polynomials starting from 1->order.
     val powers = DenseVector.range(0,order+1) // Array storing the powers of the polynomials starting from 0->order+1.
 
-    breakable { for(i <- 0 until iter) {
+    breakable { for(i <- 0 until maxIter) {
         val h = y-low // Center the points around 'low'.
         val hM = DenseMatrix.tabulate(h.length,powers.length){ (i, j) => math.pow(h(i),powers(j))} // Create the set of equations.
         val M = DenseMatrix.horzcat(hM,e.toDenseMatrix.t) // Concatenate e to polynomial matrices.
@@ -64,7 +67,7 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         val z = DenseVector.zeros[Double](order+3)
         z(0 to 0) := low
         z(order+2 to order+2) := hi
-        z(1 to order+1) := DenseVector.tabulate(order+1){ i => findzero(err, y(i), y(i+1)) }
+        z(1 to order+1) := DenseVector.tabulate(order+1){ i => findzero(err, y(i), y(i+1), maxIter=findZeroMaxIter, thresh=findZeroThresh) }
 
         // Between each point in z, attempt to find the point which maximises the error function.
         val y1 = DenseVector.zeros[Double](order+2)
@@ -73,7 +76,7 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         for(j <- 0 until order+2) {
             if (signum(errDiv(z(j))) != signum(errDiv(z(j+1)))) {
                 // Error is between z(j) and z(j+1), find the root.
-                y1(j to j) := findzero(errDiv, z(j), z(j+1))
+                y1(j to j) := findzero(errDiv, z(j), z(j+1), maxIter=findZeroMaxIter, thresh=findZeroThresh)
                 v(j to j) := math.abs(err(y1(j)))
             } else {
                 // Error is not between z(j) and z(j+1), select the one with the biggest error.
@@ -97,6 +100,7 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         } else if((ind<y.length-1) && math.abs(y(ind+1)-y1(ind)) < thresh) {
             break
         }
+        if (i == maxIter-1) println(f"Warning: Remez did not converge after $i%d iterations.")
         y = y1
     }}
 }

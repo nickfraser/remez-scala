@@ -13,7 +13,7 @@ class RemezSuite extends FlatSpec with Matchers {
     val errTol = 1.0e-5
 
     // Test 1.
-    it should f"find the coeffs for test 1 (params: f(x)=exp(x), low=0.0, hi=2^-10, order=2)" in {
+    "The Remez class" should f"find the coeffs for test 1 (params: f(x)=exp(x), low=0.0, hi=2^-10, order=2)" in {
         val exp = DenseVector(1.000000000004853e+00, 9.999999105564560e-01, 5.002442127611959e-01)
         val expErr = 4.853011733229117e-12
         val coeffTolV = max(abs(exp))*coeffTol

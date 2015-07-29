@@ -20,6 +20,7 @@ class RemezSuite extends FlatSpec with Matchers {
         val errTolV = abs(expErr*errTol)
         val tes = new Remez(math.exp(_), math.exp(_), 0.0, math.pow(2,-10), 2)
         (tes.coeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
+        (tes.bCoeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
         tes.maxErr should be (expErr +- errTolV)
     }
 
@@ -31,28 +32,33 @@ class RemezSuite extends FlatSpec with Matchers {
         val errTolV = abs(expErr*errTol)
         val tes = new Remez(math.sin(_), math.cos(_), 0.0, math.pow(2,-10), 2)
         (tes.coeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
+        (tes.bCoeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
         tes.maxErr should be (expErr +- errTolV)
     }
 
     // Test 3.
     it should f"find the coeffs for test 3 (params: f(x)=exp(x), low=-8.0, hi=0.0, order=5)" in {
         val exp = DenseVector(-5.748063834086523e-03, 4.740601769798286e-02, -5.826028714481889e-02, 2.567153397694599e-02, -4.658388047107521e-03, 3.139040166568819e-04)
+        val bExp = DenseVector(9.939164735380110e-01, 9.325514876112475e-01, 3.762240834958319e-01, 7.750168712990971e-02, 7.897772619167753e-03, 3.139040166568819e-04)
         val expErr = -6.083526461989035e-03
         val coeffTolV = max(abs(exp))*coeffTol
         val errTolV = abs(expErr*errTol)
         val tes = new Remez(math.exp(_), math.exp(_), -8.0, 0.0, 5)
         (tes.coeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
+        (tes.bCoeffs.toArray, bExp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
         tes.maxErr should be (expErr +- errTolV)
     }
 
     // Test 4.
     it should f"find the coeffs for test 4 (params: f(x)=sin(x), low=-8.0, hi=0.0, order=5)" in {
         val exp = DenseVector(-9.099241668557152e-01, -8.794578655807470e-01, 1.576746585780616e+00, -5.256088365335613e-01, 6.263299793032073e-02, -2.451165635256970e-03)
+        val bExp = DenseVector(7.943407976766537e-02, 1.504098443699441e+00, 4.632376617026193e-01, -9.009890932775844e-02, -3.541362747995806e-02, -2.451165635256970e-03)
         val expErr = 7.943407976766663e-02
         val coeffTolV = max(abs(exp))*coeffTol
         val errTolV = abs(expErr*errTol)
         val tes = new Remez(math.sin(_), math.cos(_), -8.0, 0.0, 5)
         (tes.coeffs.toArray, exp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
+        (tes.bCoeffs.toArray, bExp.toArray).zipped.map((x,y) => x should be (y +- coeffTolV))
         tes.maxErr should be (expErr +- errTolV)
     }
 

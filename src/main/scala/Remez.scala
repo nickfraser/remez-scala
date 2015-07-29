@@ -7,6 +7,7 @@ import scala.util.control.Breaks._
 /** An iterative algorithm to compute the least squares polynomial approximation to a function.
   *
   * A basic test can be implemented as follows: new Remez(math.sin(_), math.cos(_), 0.0, math.pow(2,-10), 2); res0.coeffs
+  * TODO: Use a Chebychev approximation to estimate the initial roots.
   */
 class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, order: Int, maxIter: Int=10, thresh: Double=math.pow(2,-30), findZeroMaxIter: Int=1000, findZeroThresh: Double = math.pow(2,-52)) {
     /** Find the root of err between y1 and y2. */
@@ -41,6 +42,30 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         }
         if (i == maxIter) println(f"Warning: FindZero did not converge after $i%d iterations.")
         x
+    }
+
+    /** Calculate a polynomial that is in the same space as the input.
+      *
+      * TODO: Calculate this using recursion?
+      */
+    def shiftPolynomial(coeffs: DenseVector[Double], x0: Double): DenseVector[Double] = {
+        val len = coeffs.length
+        val b = DenseVector.zeros[Double](len)
+        var prevRow = DenseVector.zeros[Int](len)
+        for (i <- 0 until len) {
+            val nextRow = DenseVector.zeros[Int](len)
+            for (j <- 0 to i reverse) {
+                val d = i-j
+                if(j == 0) {
+                    nextRow(j to j) := 1
+                } else {
+                    nextRow(j to j) := prevRow(j) + prevRow(j-1)
+                }
+                b(j) :+= coeffs(i)*nextRow(j)*math.pow(-x0,d)
+            }
+            prevRow = nextRow
+        }
+        b
     }
 
     var y = linspace(low, hi, order+2) // Estimate starting point for coefficients.
@@ -103,5 +128,6 @@ class Remez(f: Double => Double, fd: Double => Double, low: Double, hi: Double, 
         if (i == maxIter-1) println(f"Warning: Remez did not converge after $i%d iterations.")
         y = y1
     }}
+    val bCoeffs = shiftPolynomial(coeffs, low)
 }
 
